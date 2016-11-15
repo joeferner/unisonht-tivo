@@ -3,7 +3,7 @@
     "lib": ["es7"]
   },
   "files": [
-    "typings/index.d.ts",
-    "index.ts"
+    "index.ts",
+    "test.ts"
   ]
 }
