@@ -1,0 +1,25 @@
+{
+  "name": "unisonht-tivo",
+  "version": "1.0.0",
+  "description": "UnisonHT Plugin for TiVo",
+  "main": "index.js",
+  "scripts": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joeferner/unisonht-tivo.git"
+  },
+  "keywords": [
+    "unisonht",
+    "tivo"
+  ],
+  "author": "Joe Ferner <joe@fernsroth.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/joeferner/unisonht-tivo/issues"
+  },
+  "homepage": "https://github.com/joeferner/unisonht-tivo#readme",
+  "dependencies": {
+    "unisonht": "^1.0.0"
+  }
+}
