@@ -1,6 +1,6 @@
-import {Device, DeviceOptions} from "unisonht/lib/Device";
-import createLogger from "unisonht/lib/Log";
+import {UnisonHT, UnisonHTDevice} from "unisonht";
 import * as net from "net";
+import createLogger from "unisonht/lib/Log";
 const log = createLogger('tivo');
 
 /*
@@ -40,19 +40,30 @@ const log = createLogger('tivo');
  * EXIT
  */
 
-interface TivoOptions extends DeviceOptions {
-  port?: number;
-  address: string;
-}
-
-export default class Tivo extends Device {
-  private options: TivoOptions;
+export default class Tivo implements UnisonHTDevice {
+  private options: Tivo.Options;
   private socket: net.Socket;
 
-  constructor(options: TivoOptions) {
-    super(options);
+  constructor(options: Tivo.Options) {
     this.options = options;
     this.options.port = this.options.port || 31339;
+  }
+
+  getName(): string {
+    return this.options.name;
+  }
+
+  ensureOn(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  ensureOff(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  stop(): Promise<void> {
+    this.socket.destroy();
+    return Promise.resolve();
   }
 
   buttonPress(button: string): Promise<void> {
@@ -116,5 +127,13 @@ export default class Tivo extends Device {
         log.debug('data: %s', data);
       });
     });
+  }
+}
+
+module Tivo {
+  export interface Options {
+    name: string;
+    port?: number;
+    address: string;
   }
 }
