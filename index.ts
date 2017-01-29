@@ -93,6 +93,7 @@ export default class Tivo implements UnisonHTDevice {
       return Promise.resolve();
     }
     return this.connect()
+      .then(()=>{});
   }
 
   private connect(): Promise<net.Socket> {
