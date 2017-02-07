@@ -1,7 +1,6 @@
-import {UnisonHT, UnisonHTDevice} from "unisonht";
+import {Device, UnisonHTResponse} from "unisonht";
+import * as express from "express";
 import * as net from "net";
-import createLogger from "unisonht/lib/Log";
-const log = createLogger('tivo');
 
 /*
  * Keys: https://www.tivo.com/assets/images/abouttivo/resources/downloads/brochures/TiVo_TCP_Network_Remote_Control_Protocol.pdf
@@ -40,34 +39,28 @@ const log = createLogger('tivo');
  * EXIT
  */
 
-export default class Tivo implements UnisonHTDevice {
-  private options: Tivo.Options;
+export class Tivo extends Device {
   private socket: net.Socket;
 
-  constructor(options: Tivo.Options) {
-    this.options = options;
-    this.options.port = this.options.port || 31339;
-  }
-
-  getName(): string {
-    return this.options.name;
-  }
-
-  ensureOn(): Promise<void> {
-    return Promise.resolve();
-  }
-
-  ensureOff(): Promise<void> {
-    return Promise.resolve();
+  constructor(name: string, options: Tivo.Options) {
+    super(name, options);
+    options.port = options.port || 31339;
   }
 
   stop(): Promise<void> {
     this.socket.destroy();
-    return Promise.resolve();
+    return super.stop();
   }
 
-  buttonPress(button: string): Promise<void> {
-    button = button.toUpperCase();
+  getStatus(): Promise<Device.Status> {
+    return Promise.resolve({
+      power: Device.PowerState.ON
+    });
+  }
+
+  protected handleButtonPress(req: express.Request, res: UnisonHTResponse, next: express.NextFunction): void {
+    const buttonName = req.query.buttonName;
+    let button = buttonName.toUpperCase();
     if (button === "HOME") {
       button = "TIVO";
     } else if (button === "FASTFORWARD") {
@@ -76,16 +69,16 @@ export default class Tivo implements UnisonHTDevice {
       button = "REVERSE";
     }
 
-    return this.ensureConnected()
-      .then(()=> {
+    res.promiseNoContent(this.ensureConnected()
+      .then(() => {
         const data = "IRCODE " + button + "\r";
         try {
-          log.debug("Sending: %s", data);
+          this.log.debug("Sending: %s", data);
           this.socket.write(data);
         } catch (e) {
-          log.error("Could not send %s", data, e);
+          this.log.error("Could not send %s", data, e);
         }
-      });
+      }));
   }
 
   private ensureConnected(): Promise<void> {
@@ -93,20 +86,21 @@ export default class Tivo implements UnisonHTDevice {
       return Promise.resolve();
     }
     return this.connect()
-      .then(()=>{});
+      .then(() => {
+      });
   }
 
   private connect(): Promise<net.Socket> {
-    log.debug("connecting to Tivo: %s:%d", this.options.address, this.options.port);
-    return new Promise((resolve, reject)=> {
+    this.log.debug("connecting to Tivo: %s:%d", this.getOptions().address, this.getOptions().port);
+    return new Promise((resolve, reject) => {
       const opts = {
-        host: this.options.address,
-        port: this.options.port
+        host: this.getOptions().address,
+        port: this.getOptions().port
       };
       this.socket = net.connect(opts);
 
-      this.socket.on('connect', ()=> {
-        log.debug('connected');
+      this.socket.on('connect', () => {
+        this.log.debug('connected');
         if (resolve) {
           resolve(this.socket);
         }
@@ -114,8 +108,8 @@ export default class Tivo implements UnisonHTDevice {
         reject = null;
       });
 
-      this.socket.on('close', ()=> {
-        log.debug('connection closed');
+      this.socket.on('close', () => {
+        this.log.debug('connection closed');
         this.socket = null;
         if (reject) {
           reject();
@@ -124,16 +118,19 @@ export default class Tivo implements UnisonHTDevice {
         reject = null;
       });
 
-      this.socket.on('data', (data)=> {
-        log.debug('data: %s', data);
+      this.socket.on('data', (data) => {
+        this.log.debug('data: %s', data);
       });
     });
   }
+
+  public getOptions(): Tivo.Options {
+    return <Tivo.Options>super.getOptions();
+  }
 }
 
-module Tivo {
-  export interface Options {
-    name: string;
+export module Tivo {
+  export interface Options extends Device.Options {
     port?: number;
     address: string;
   }

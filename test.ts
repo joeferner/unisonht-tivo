@@ -1,6 +1,8 @@
-const repl = require('repl');
-const Tivo = require('.').default;
-var tivo = new Tivo({address: '192.168.0.60'});
+import {UnisonHT} from "unisonht";
+import {Tivo} from ".";
 
-const r = repl.start('> ');
-r.context.tivo = tivo;
+const unisonht = new UnisonHT();
+
+unisonht.use(new Tivo('tivo', {address: '192.168.0.60'}));
+
+unisonht.listen(3000);
